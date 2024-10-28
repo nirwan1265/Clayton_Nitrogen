@@ -18,7 +18,7 @@ The hyperspectral data was gathered using a hyperspectral imaging instrument, al
   - For other BZea samples, three measurements per leaf were taken to ensure accurate data capture.
 
 ### Nitrogen Analysis
-Nitrogen content in leaf samples was measured using a specialized nitrogen-measuring instrument. This analysis was conducted with the assistance of Rishab.
+For nitrogen analysis, we weighed 2 mg of each dry leaf sample and placed it in the Thermo Scientific Flash 2000 CHNS/O Analyzer. Each sample was then combusted in a high-temperature reactor with added oxygen. Using the Dumas method, the analyzer measured the nitrogen gas produced, providing a nitrogen content reading for each sample. This analysis was conducted with the assistance of Rashid (from The Sustainable Soil Lab at NCSU).
 
 ---
 
