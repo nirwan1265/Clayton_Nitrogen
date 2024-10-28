@@ -1,5 +1,5 @@
 ################################################################################
-######## LOAD THE DATA
+######## LOAD THE REFLECTANCE DATA
 ################################################################################
 
 # Load the Zdip reflectance file
@@ -146,6 +146,18 @@ reflectance_grouped_avg_cerca$file <- gsub("[-.]", "_", reflectance_grouped_avg_
 
 # Combine the two data frames
 reflectance_grouped_avg <- rbind(reflectance_grouped_avg, reflectance_grouped_avg_cerca)
+
+# Change all the "." to "_" in row names in reflectance_grouped_avg
+rownames(reflectance_grouped_avg) <- gsub("[-.]", "_", rownames(reflectance_grouped_avg))
+
+# change to lower case
+reflectance_grouped_avg$file <- trimws(tolower(reflectance_grouped_avg$file))
+str(reflectance_grouped_avg)
+
+# Convert all the rows of the reflectance_grouped_avg to numeric
+reflectance_grouped_avg[, -ncol(reflectance_grouped_avg)] <- sapply(reflectance_grouped_avg[, -ncol(reflectance_grouped_avg)], as.numeric)
+str(reflectance_grouped_avg)
+is.na(reflectance_grouped_avg)
 
 # Save RDS of reflectance_grouped_avg to data
 saveRDS(reflectance_grouped_avg, "/Users/nirwantandukar/Library/Mobile Documents/com~apple~CloudDocs/Github/Clayton_Nitrogen/data/reflectance_all_grouped_avg.rds")
