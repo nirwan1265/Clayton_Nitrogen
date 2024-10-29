@@ -13,6 +13,9 @@ response_N <- readRDS("data/response_N.rds")
 
 # Perform the join for Nitrogen and reflectance for Clayton
 reflectance_grouped_avg2 <- inner_join(reflectance_grouped_avg, response_N, by = "file")
+# Set the row names to the values in the 'file' column
+rownames(reflectance_grouped_avg2) <- reflectance_grouped_avg2$file
+# Remove the 'file' column now that it's set as row names
 reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-c(221,220,218)) 
 reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-file)
 reflectance_grouped_avg2 <- reflectance_grouped_avg2[complete.cases(reflectance_grouped_avg2),]
@@ -41,7 +44,6 @@ reflectance_grouped_avg
 ######## Finding the correct no. of components
 ########################################
 
-
 # Extract the Reponse and Predictors for finding the correct Number of Components
 response <- reflectance_grouped_avg[, "Nitrogen"]
 predictors <- as.matrix(reflectance_grouped_avg %>% select(-Nitrogen))
@@ -50,7 +52,7 @@ predictors
 # Parameters for PLSR
 random_seed <- 7529075
 seg <- 80
-maxComps <- 100
+maxComps <- 10
 iterations <- 100
 prop <- 0.70
 
@@ -75,13 +77,17 @@ n <- nrow(reflectance_grouped_avg)
 
 # Pre-determined optimal number of components
 optimal_components <- nComps
-optimal_components <- 7
 
 # Initialize vectors to store metrics for each repeat
-train_r2cv <- numeric(n_repeats)
-test_r2cv <- numeric(n_repeats)
+test_r2 <- numeric(n_repeats)       # R-squared (R²) for each CV test set
+train_r2cv <- numeric(n_repeats)    # r² for training set (squared correlation)
+test_r2cv <- numeric(n_repeats)     # r² for test set (squared correlation)
 train_rmsecv <- numeric(n_repeats)
 test_rmsecv <- numeric(n_repeats)
+bias_cv <- numeric(n_repeats)       # Bias for each test set
+
+# Initialize a list to store predicted and actual values across all CV iterations
+cv_results <- list()
 
 # Loop through 10 random seeds
 for (i in 1:n_repeats) {
@@ -97,33 +103,185 @@ for (i in 1:n_repeats) {
   # Fit the PLSR model with leave-one-out cross-validation (LOO)
   plsr_model <- pls::plsr(Nitrogen ~ ., data = reflectance_grouped_avg_train, validation = "LOO")
   
-  # Calculate predictions for training and test sets with the optimal number of components
-  predicted_N_train <- predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_train)
-  predicted_N_test <- predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_test)
+  # Calculate predictions for the test set with the optimal number of components
+  predicted_N_test <- as.numeric(predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_test))
   
-  # Calculate R²CV for training and test sets
-  train_r2cv[i] <- cor(predicted_N_train, reflectance_grouped_avg_train$Nitrogen)^2
+  # Store predictions and actual values for this iteration
+  cv_results[[i]] <- data.frame(
+    Measured_N = reflectance_grouped_avg_test$Nitrogen,
+    Predicted_N = predicted_N_test,
+    Sample_ID = rownames(reflectance_grouped_avg_test)
+  )
+  
+  # Calculate r² for training and test sets (squared correlation coefficient)
+  train_r2cv[i] <- cor(predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_train), reflectance_grouped_avg_train$Nitrogen)^2
   test_r2cv[i] <- cor(predicted_N_test, reflectance_grouped_avg_test$Nitrogen)^2
   
   # Calculate RMSECV for training and test sets
-  train_rmsecv[i] <- sqrt(mean((predicted_N_train - reflectance_grouped_avg_train$Nitrogen)^2))
+  train_rmsecv[i] <- sqrt(mean((predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_train) - reflectance_grouped_avg_train$Nitrogen)^2))
   test_rmsecv[i] <- sqrt(mean((predicted_N_test - reflectance_grouped_avg_test$Nitrogen)^2))
+  
+  # Calculate true R-squared (R²) for the test set
+  SS_res <- sum((reflectance_grouped_avg_test$Nitrogen - predicted_N_test)^2)
+  SS_tot <- sum((reflectance_grouped_avg_test$Nitrogen - mean(reflectance_grouped_avg_test$Nitrogen))^2)
+  test_r2[i] <- 1 - (SS_res / SS_tot)
+  
+  # Calculate Bias for the test set
+  bias_cv[i] <- mean(predicted_N_test - reflectance_grouped_avg_test$Nitrogen)
 }
 
-# Combine results into a data frame for plotting
-results_df <- data.frame(
-  Repeat = rep(1:n_repeats, 2),
-  Set = rep(c("Training", "Testing"), each = n_repeats),
-  R2CV = c(train_r2cv, test_r2cv),
-  RMSECV = c(train_rmsecv, test_rmsecv)
-)
+# Combine all CV results into a single data frame
+cv_results_df <- do.call(rbind, cv_results)
+
+# Calculate the average predicted values per sample
+avg_predictions <- aggregate(Predicted_N ~ Sample_ID + Measured_N, data = cv_results_df, FUN = mean)
+
+# Calculate average R²CV, RMSECV, and BiasCV for testing sets across all iterations
+avg_test_r2 <- mean(test_r2)            # Average R² for test sets
+avg_train_r2cv <- mean(train_r2cv)      # Average r²CV for training sets
+avg_test_r2cv <- mean(test_r2cv)        # Average r²CV for test sets
+avg_train_rmsecv <- mean(train_rmsecv)  # Average RMSECV for training sets
+avg_test_rmsecv <- mean(test_rmsecv)    # Average RMSECV for test sets
+avg_bias_cv <- mean(bias_cv)            # Average Bias for test sets
+
+# Print out the averaged metrics
+cat("Average Test R² (R²CV):", round(avg_test_r2, 4), "\n")
+cat("Average Training r²CV:", round(avg_train_r2cv, 4), "\n")
+cat("Average Test r²CV:", round(avg_test_r2cv, 4), "\n")
+cat("Average Training RMSECV:", round(avg_train_rmsecv, 4), "\n")
+cat("Average Test RMSECV:", round(avg_test_rmsecv, 4), "\n")
+cat("Average Bias (BiasCV):", round(avg_bias_cv, 4), "\n")
 
 
-# Calculate average R²CV and RMSECV for training and testing sets
-avg_train_r2cv <- mean(train_r2cv)
-avg_test_r2cv <- mean(test_r2cv)
-avg_train_rmsecv <- mean(train_rmsecv)
-avg_test_rmsecv <- mean(test_rmsecv)
+n <- nrow(avg_predictions)
+
+### Adding low and High N
+response_N <- vroom("/Users/nirwantandukar/Documents/Research/data/Nitrogen_measurement/element_analysis.csv")
+# Remove all 0's from the true_data's column Nitrogen
+response_N <- response_N[response_N$Nitrogen != 0,]
+response_N <- response_N[response_N$Hydrogen != 0,]
+response_N <- response_N[response_N$Carbon != 0,]
+
+# Convert all to "_" 
+response_N$file <- gsub("[-.]", "_", response_N$file)
+colnames(response_N)
+
+# Average the duplicate values in the file column of response_N except the Genotype, Stage, High/low N columns
+response_N <- response_N %>%
+  dplyr::group_by(file) %>%
+  dplyr::summarise(
+    Genotype = first(Genotype),
+    Stage = first(Stage),
+    `High/low N` = first(`High/low N`),  # Take the first occurrence of High/low N
+    across(-c(Genotype, Stage, `High/low N`), mean, na.rm = TRUE),  # Average other columns
+    .groups = "drop"
+  )
+# Remove leading/trailing spaces and convert to lowercase
+response_N$file <- trimws(tolower(response_N$file))
+
+# Check the result
+head(response_N)
+
+str(response_N)
+str(avg_predictions)
+unique(response_N$Stage)
+
+avg_predictions <- inner_join(avg_predictions, response_N, by = c("Sample_ID" = "file"))
+str(avg_predictions)
+
+# Recode Stage to Early and Late in avg_predictions
+avg_predictions <- avg_predictions %>%
+  dplyr::mutate(Stage_Category = ifelse(Stage %in% c("R2", "V13", "VT", "R4"), "Early", "Late"))
+
+calibration_plot <- ggplot(avg_predictions, aes(x = Measured_N, y = Predicted_N, shape = Stage_Category, fill = `High/low N`)) +
+  geom_point(size = 3, color = "black") +
+  scale_shape_manual(values = c("Early" = 21, "Late" = 24)) +  # Circle for Early, Triangle for Late
+  scale_fill_manual(values = c("High" = "black", "Low" = NA)) +  # Black for High, no fill for Low
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  labs(
+    x = "Measured N content (%)",
+    y = "Predicted N content (%)",
+    title = "Cross-Validated Calibration Plot with Averaged Predictions"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(panel.grid = element_blank(), panel.background = element_rect(fill = "white")) +
+  annotate("text", x = 1, y = 5.5, label = paste("R²CV =", round(avg_test_r2, 4)), hjust = 0, size = 4) +
+  annotate("text", x = 1, y = 5, label = paste("RMSECV =", round(avg_test_rmsecv, 2)), hjust = 0, size = 4) +
+  annotate("text", x = 1, y = 4.5, label = paste("BiasCV =", round(avg_bias_cv, 4)), hjust = 0, size = 4) +
+  annotate("text", x = 1, y = 4, label = paste("n =", n), hjust = 0, size = 4) +
+  annotate("text", x = 1, y = 3.5, label = paste(optimal_components, "comp"), hjust = 0, size = 4) +
+  guides(fill = guide_legend(override.aes = list(shape = 21)))  # Ensures fill legend shows as circles
+
+# Print the calibration plot
+print(calibration_plot)
+
+
+# Print the calibration plot
+print(calibration_plot)
+
+# Print the calibration plot
+print(calibration_plot)
+
+
+# Save the calibration plot
+ggsave("figures/plsr_calibration_Clayton.png", calibration_plot, width = 10, height = 6, units = "in", dpi = 300, bg = "white")
+
+
+
+# PCA plot for response_N with High and Low N and Stage
+str(response_N)
+reflectance_grouped_avg <- readRDS("data/reflectance_all_grouped_avg.rds")
+
+# Perform the join for Nitrogen and reflectance for Clayton
+reflectance_grouped_avg2 <- inner_join(reflectance_grouped_avg, response_N, by = "file")
+
+# Set the row names to the values in the 'file' column
+rownames(reflectance_grouped_avg2) <- reflectance_grouped_avg2$file
+
+# Remove the 'file' column now that it's set as row names
+reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-c(224,223,221,217,216)) 
+reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-Genotype)
+reflectance_grouped_avg2 <- reflectance_grouped_avg2[complete.cases(reflectance_grouped_avg2),]
+
+str(reflectance_grouped_avg2)
+
+
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+
+# Categorize Stage into Early and Late
+reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>%
+  mutate(Stage_Category = ifelse(Stage %in% c("R2", "V13", "VT", "R4"), "Early", "Late"))
+
+# Prepare data for PCA by selecting all columns except Stage, High/low N, and Stage_Category
+pca_data <- reflectance_grouped_avg2 %>%
+  dplyr::select(-c(Stage, `High/low N`, Stage_Category, Nitrogen))
+
+# Perform PCA
+pca_result <- prcomp(pca_data, scale. = TRUE)
+
+# Get PCA scores and add High/low N and Stage_Category information
+pca_scores <- as.data.frame(pca_result$x)
+pca_scores <- cbind(pca_scores, reflectance_grouped_avg2 %>% select(`High/low N`, Stage_Category))
+
+# Plot PCA results for PC1 vs PC2, using color for High/low N and shape for Stage_Category (Early/Late)
+pca_plot <- ggplot(pca_scores, aes(x = PC1, y = PC2, color = `High/low N`, shape = Stage_Category)) +
+  geom_point(size = 3) +
+  labs(
+    title = "PCA Plot (PC1 vs PC2) Using Reflectance and Nitrogen",
+    x = "Principal Component 1",
+    y = "Principal Component 2"
+  ) +
+  scale_color_manual(values = c("High" = "black", "Low" = "grey")) +
+  scale_shape_manual(values = c("Early" = 16, "Late" = 17)) +  # Circle for Early, Triangle for Late
+  theme_minimal(base_size = 15) +
+  theme(panel.grid = element_blank(), panel.background = element_rect(fill = "white"))
+
+# Print the PCA plot
+print(pca_plot)
+
+
 
 # Plot R²CV with average lines
 r2_plot <- ggplot(results_df, aes(x = Repeat, y = R2CV, color = Set)) +

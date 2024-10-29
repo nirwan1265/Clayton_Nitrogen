@@ -58,3 +58,5 @@ str(data_combined)
 
 # Save the data_combined as unl_Ge_N_reflectance.rds in data
 saveRDS(data_combined, file = "data/unl_Ge_N_reflectance.rds")
+
+data_combined <- readRDS("data/unl_Ge_N_reflectance.rds")
