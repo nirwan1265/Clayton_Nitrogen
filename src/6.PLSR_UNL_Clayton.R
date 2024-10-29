@@ -6,6 +6,8 @@
 data_combined <- readRDS("data/unl_Ge_N_reflectance.rds")
 str(data_combined)
 
+reflectance_grouped_avg <- readRDS("data/reflectance_all_grouped_avg.rds")
+
 # Create a random sample of row indices for the training set (80% of the data)
 set.seed(13)
 trainIndex <- sample(1:n, size = 0.8 * n, replace = FALSE)
@@ -24,6 +26,7 @@ colnames(reflectance_grouped_avg_test)[217] <- "response"
 data_combined_ncomp <- rbind(data_combined, reflectance_grouped_avg_train,reflectance_grouped_avg_test)
 str(data_combined_ncomp)
 
+data_combined_ncomp <- data_combined_ncomp[,]
 
 ########################################
 ######## Finding the correct no. of components
@@ -118,6 +121,10 @@ results_df <- data.frame(
 
 # Saving the file
 #saveRDS(results_df, "data/PLSR_results_UNL_Clayton.rds")
+#saveRDS(plsr_model, "data/plsr_model_UNL_Clayton.rds")
+
+results_df <- readRDS("data/PLSR_results_UNL_Clayton.rds")
+plsr_model <- readRDS("data/plsr_model_UNL_Clayton.rds")
 
 # Plot R²CV with average lines
 avg_train_r2cv <- mean(train_r2cv)
@@ -128,6 +135,7 @@ r2_plot <- ggplot(results_df, aes(x = Repeat, y = R2CV, color = Set)) +
   geom_line() +
   geom_hline(aes(yintercept = avg_train_r2cv), color = "blue", linetype = "dashed") +
   geom_hline(aes(yintercept = avg_test_r2cv), color = "red", linetype = "dashed") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.05)) +  # Y-axis increments of 0.2
   labs(title = "Cross-Validation R² for PLSR Model", y = expression(R^2), x = "Iteration") +
   theme_minimal(base_size = 15) +
   theme(
@@ -154,6 +162,5 @@ rmse_plot <- ggplot(results_df, aes(x = Repeat, y = RMSECV, color = Set)) +
   )
 
 # Print the plots
-quartz()
 print(r2_plot)
 print(rmse_plot)

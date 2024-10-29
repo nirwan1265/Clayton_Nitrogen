@@ -12,6 +12,7 @@ response_N <- response_N[response_N$Carbon != 0,]
 
 # Convert all to "_" 
 response_N$file <- gsub("[-.]", "_", response_N$file)
+colnames(response_N)
 
 # Average the duplicate values in the file column of response_N except the Genotype, Stage, High/low N columns
 response_N <- response_N %>%
@@ -31,6 +32,6 @@ str(response_N)
 
 
 # Save response_N to data as RDS
-saveRDS(response_N, file = "data/response_N.rds")
+#saveRDS(response_N, file = "data/response_N.rds")
 
 
