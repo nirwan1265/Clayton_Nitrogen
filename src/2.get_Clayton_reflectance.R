@@ -1,6 +1,8 @@
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
 ######## LOAD THE REFLECTANCE DATA
 ################################################################################
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Load the Zdip reflectance file
 reflectance_zdip1 <- read.table("/Users/nirwantandukar/Documents/Research/data/Nitrogen_measurement/raw_reflectance/Zdip_7.14-28_reflectance.txt", sep =",", header = T)
@@ -15,20 +17,20 @@ reflectance_zdip <- cbind(reflectance_zdip1, reflectance_zdip2, reflectance_zdip
 reflectance_zdip[1:5,1:5]
 
 # Load the CERCA reflectance file
-reflectance_cerca <- vroom("/Users/nirwantandukar/Documents/Research/data/Nitrogen_measurement/raw_reflectance/CERCA_reflectance.txt")
+reflectance_cerca <- vroom("/Users/nirwantandukar/Documents/Research/data/Nitrogen_measurement/raw_reflectance/CERCA_reflectance.csv")
 reflectance_cerca[1:5,1:5]
 
 # Remove alL columns with the partial string match to "CLY24-C8BC-27_PM_e2_p1_50.asd" from reflectance_cerca cause it had 250 repeats
-reflectance_cerca <- reflectance_cerca %>% dplyr::select(-contains("CLY24-C8BC-27_PM_e2_p1"))
+#reflectance_cerca <- reflectance_cerca %>% dplyr::select(-contains("CLY24-C8BC-27_PM_e2_p1"))
 
 
 # Remove _1.asd and _2.asd from the column names. Did 250 cause there was an error before
-for (i in 1:250) {
+for (i in 1:10) {
   colnames(reflectance_zdip) <- gsub(paste0("_", i, ".asd"), "", colnames(reflectance_zdip))
 }
 
 # Write the loop to remove _n.asd from the colnames. 1 to 250
-for (i in 1:250) {
+for (i in 1:10) {
   colnames(reflectance_cerca) <- gsub(paste0("_", i, ".asd"), "", colnames(reflectance_cerca))
 }
 
