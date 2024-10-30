@@ -9,6 +9,7 @@ response_N <- vroom("/Users/nirwantandukar/Documents/Research/data/Nitrogen_meas
 response_N <- response_N[response_N$Nitrogen != 0,]
 response_N <- response_N[response_N$Hydrogen != 0,]
 response_N <- response_N[response_N$Carbon != 0,]
+response_N <- response_N[response_N$Stage != "PM",]
 
 # Convert all to "_" 
 response_N$file <- gsub("[-.]", "_", response_N$file)
