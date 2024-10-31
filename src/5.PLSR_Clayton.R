@@ -239,7 +239,7 @@ calibration_plot <- ggplot(avg_predictions, aes(x = Measured_N, y = Predicted_N,
 print(calibration_plot)
 
 # Save the calibration plot
-ggsave("figures/plsr_calibration_Clayton_log10.png", calibration_plot, width = 10, height = 6, units = "in", dpi = 300, bg = "white")
+ggsave("figures/plsr_calibration_Clayton.png", calibration_plot, width = 10, height = 6, units = "in", dpi = 300, bg = "white")
 
 # Plot R²CV with average lines
 r2_plot <- ggplot(results_df, aes(x = Repeat, y = R2CV, color = Set)) +
@@ -283,3 +283,45 @@ ggsave("figures/plsr_rmse_Clayton.png", rmse_plot, width = 10, height = 6, units
 # Calculate predictions for the test set with the optimal number of components
 predicted_N_test_final <- as.numeric(predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_test_final))
 cor(reflectance_grouped_avg_test_final$Nitrogen,predicted_N_test_final)
+
+
+
+
+###############
+### MODEL USING THE WHOLE DATA
+###############
+# Load the files
+reflectance_grouped_avg <- readRDS("data/reflectance_all_grouped_avg.rds")
+response_N <- readRDS("data/response_N.rds")
+
+# Perform the join for Nitrogen and reflectance for Clayton
+reflectance_grouped_avg2 <- inner_join(reflectance_grouped_avg, response_N, by = "file")
+# Set the row names to the values in the 'file' column
+rownames(reflectance_grouped_avg2) <- reflectance_grouped_avg2$file
+# Remove the 'file' column now that it's set as row names
+reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-c(221,220,218)) 
+reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>% dplyr::select(-file)
+reflectance_grouped_avg2 <- reflectance_grouped_avg2[complete.cases(reflectance_grouped_avg2),]
+
+setdiff(response_N$file, reflectance_grouped_avg$file)
+
+# Convert all columns in reflectance_grouped_avg_train to numeric except the 'file' column
+# reflectance_grouped_avg2 <- reflectance_grouped_avg2 %>%
+#   dplyr::mutate(across(-file, as.numeric))
+
+str(reflectance_grouped_avg2)
+
+# Divide reflectance_grouped_avg into training and testing data sets with 5 CV for PSLR model
+set.seed(123)
+
+# Determine the number of rows
+n <- nrow(reflectance_grouped_avg2)
+
+# Create a random sample of row indices for the training set (80% of the data)
+reflectance_grouped_avg <- reflectance_grouped_avg2
+optimal_components <- 7
+plsr_model <- pls::plsr(Nitrogen ~ ., data = reflectance_grouped_avg_train, validation = "LOO")
+# Save the mode
+saveRDS(plsr_model, "data/plsr_model_whole.rds")
+
+
