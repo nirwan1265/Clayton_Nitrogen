@@ -1,11 +1,12 @@
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
 ######## RUNNING THE PSLR MODEL ON CLAYTON DATA
 ################################################################################
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-########################################
+################################################################################
 ######## Loading the files
-########################################
+################################################################################
 
 # Load the files
 reflectance_grouped_avg <- readRDS("data/reflectance_all_grouped_avg.rds")
@@ -29,7 +30,7 @@ setdiff(response_N$file, reflectance_grouped_avg$file)
 str(reflectance_grouped_avg2)
 
 # Divide reflectance_grouped_avg into training and testing data sets with 5 CV for PSLR model
-set.seed(123)
+#set.seed(123)
 
 # Determine the number of rows
 n <- nrow(reflectance_grouped_avg2)
@@ -38,43 +39,68 @@ n <- nrow(reflectance_grouped_avg2)
 reflectance_grouped_avg <- reflectance_grouped_avg2
 
 
-########################################
+################################################################################
 ######## Finding the correct no. of components
-########################################
+################################################################################
 
 # Extract the Reponse and Predictors for finding the correct Number of Components
 response <- reflectance_grouped_avg[, "Nitrogen"]
 predictors <- as.matrix(reflectance_grouped_avg %>% select(-Nitrogen))
-predictors
+
+# Function to extract the starting number of the range for sorting
+extract_start_number <- function(col_name) {
+  as.numeric(sub("^(\\d+)-.*$", "\\1", col_name))
+}
+
+# Sort columns based on the starting number
+sorted_columns <- colnames(predictors)[order(sapply(colnames(predictors), extract_start_number))]
+
+# Order the columns based on the sorted column names
+predictors <- predictors[, sorted_columns]
+
+# Plot predictors dataframe by rows
+# matplot(t(predictors), type = "l", lty = 1, col = 1:ncol(predictors), xlab = "Wavelength", ylab = "Reflectance", main = "Spectral Data")
+# dev.off()
+# Removing the senescence leaves measurements
+# removing all the points above 0.2 for the 2500 wv
+reflectance_grouped_avg <- reflectance_grouped_avg[reflectance_grouped_avg$`2500-2500` < 0.2, ]
+
+# Extract the Reponse and Predictors for finding the correct Number of Components
+response <- reflectance_grouped_avg[, "Nitrogen"]
+predictors <- as.matrix(reflectance_grouped_avg %>% select(-Nitrogen))
+
+
 
 # Parameters for PLSR
-random_seed <- 7529075
+random_seed <- 123
 seg <- 80
 maxComps <- 10
 iterations <- 100
 prop <- 0.70
 
 # Fit the PLSR model for the components
-plsr.out <- pls::plsr(response ~ predictors, scale = FALSE, center = TRUE, 
+plsr.out <- pls::plsr(response ~ predictors, scale = TRUE, center = TRUE, 
                       ncomp = maxComps, validation = "CV", 
                       segments = seg, segment.type = "interleaved", 
                       trace = FALSE, jackknife = TRUE)
+
+summary(plsr.out)
 
 # Determine the optimal number of components
 nComps <- pls::selectNcomp(plsr.out, method = "onesigma", plot = TRUE)
 print(paste0("Optimal number of components: ", nComps))
 
 
-########################################
+################################################################################
 ######## Running the PLSR model
-########################################
+################################################################################
 
 
 ### Remove 10% of the data for unknown data/without training:
 set.seed(123)  # For reproducibility
-test_indices <- sample(1:nrow(reflectance_grouped_avg), size = 0.1 * nrow(reflectance_grouped_avg), replace = FALSE)
-reflectance_grouped_avg_test_final <- reflectance_grouped_avg[test_indices, ]  # 10% for final testing
-reflectance_grouped_avg <- reflectance_grouped_avg[-test_indices, ]      # 90% for training and cross-validation
+# test_indices <- sample(1:nrow(reflectance_grouped_avg), size = 0.1 * nrow(reflectance_grouped_avg), replace = FALSE)
+# reflectance_grouped_avg_test_final <- reflectance_grouped_avg[test_indices, ]  # 10% for final testing
+# reflectance_grouped_avg <- reflectance_grouped_avg[-test_indices, ]      # 90% for training and cross-validation
 
 # Number of cross-validation repetitions
 n_repeats <- 10
@@ -82,7 +108,7 @@ n <- nrow(reflectance_grouped_avg)
 
 # Pre-determined optimal number of components
 optimal_components <- nComps
-
+optimal_components <- 7
 # Initialize vectors to store metrics for each repeat
 test_r2 <- numeric(n_repeats)       # R-squared (R²) for each CV test set
 train_r2cv <- numeric(n_repeats)    # r² for training set (squared correlation)
@@ -106,10 +132,10 @@ for (i in 1:n_repeats) {
   reflectance_grouped_avg_test  <- reflectance_grouped_avg[-trainIndex, ]
   
   # Fit the PLSR model with leave-one-out cross-validation (LOO)
-  plsr_model <- pls::plsr(Nitrogen ~ ., data = reflectance_grouped_avg_train, validation = "LOO")
+  plsr_model <- pls::plsr(Nitrogen ~ .,scale = TRUE,center = TRUE, data = reflectance_grouped_avg_train, validation = "LOO")
   
   # Calculate predictions for the test set with the optimal number of components
-  predicted_N_test <- as.numeric(predict(plsr_model, ncomp = optimal_components, newdata = reflectance_grouped_avg_test))
+  predicted_N_test <- as.numeric(predict(plsr_model, ncomp = optimal_components,scale = TRUE,center = TRUE, newdata = reflectance_grouped_avg_test))
   
   # Store predictions and actual values for this iteration
   cv_results[[i]] <- data.frame(
@@ -134,6 +160,7 @@ for (i in 1:n_repeats) {
   # Calculate Bias for the test set
   bias_cv[i] <- mean(predicted_N_test - reflectance_grouped_avg_test$Nitrogen)
 }
+summary(plsr_model)
 
 # Combine all CV results into a single data frame
 cv_results_df <- do.call(rbind, cv_results)
@@ -286,10 +313,10 @@ cor(reflectance_grouped_avg_test_final$Nitrogen,predicted_N_test_final)
 
 
 
-
-###############
+################################################################################
 ### MODEL USING THE WHOLE DATA
-###############
+################################################################################
+
 # Load the files
 reflectance_grouped_avg <- readRDS("data/reflectance_all_grouped_avg.rds")
 response_N <- readRDS("data/response_N.rds")
@@ -320,7 +347,7 @@ n <- nrow(reflectance_grouped_avg2)
 # Create a random sample of row indices for the training set (80% of the data)
 reflectance_grouped_avg <- reflectance_grouped_avg2
 optimal_components <- 7
-plsr_model <- pls::plsr(Nitrogen ~ ., data = reflectance_grouped_avg_train, validation = "LOO")
+plsr_model <- pls::plsr(Nitrogen ~ ., data = reflectance_grouped_avg, validation = "LOO")
 # Save the mode
 saveRDS(plsr_model, "data/plsr_model_whole.rds")
 

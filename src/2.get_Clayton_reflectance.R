@@ -168,3 +168,7 @@ is.na(reflectance_grouped_avg)
 # Save RDS of reflectance_grouped_avg to data
 saveRDS(reflectance_grouped_avg, "/Users/nirwantandukar/Library/Mobile Documents/com~apple~CloudDocs/Github/Clayton_Nitrogen/data/reflectance_all_grouped_avg.rds")
 
+
+
+
+
