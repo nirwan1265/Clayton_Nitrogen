@@ -27,7 +27,7 @@ predicted_N_all <- inner_join(predicted_N_all, info, by = c("sample_id" = "file"
 
 # Subset Zdip from experiment column
 predicted_N_all_zdip <- predicted_N_all[predicted_N_all$experiment == "Zdip", ]
-
+write.csv(predicted_N_all_zdip, "results/predicted_N_all_zdip.csv", row.names = FALSE)
 # Subset "CERCA modeling" from experiment column
 predicted_N_all_modeling <- predicted_N_all[predicted_N_all$experiment != "Zdip", ]
 
@@ -73,24 +73,36 @@ combined_data$experiment <- factor(combined_data$experiment, levels = c("CERCA m
 #     legend.position = "top"
 #   )
 
+# Subset the Zdop
+combined_data <- combined_data[combined_data$experiment == "Zdip",]
 
+# Plot the diagram
 n_plot <- ggplot(combined_data, aes(x = interaction(experiment, N_treatment, lex.order = TRUE), y = predicted_N, fill = N_treatment)) +
   geom_half_boxplot(center = TRUE, errorbar.draw = FALSE, width = 0.4, nudge = 0.05) +
   geom_half_violin(side = "r", nudge = -0.05, alpha = 0.7) +
   scale_fill_manual(values = c("med" = "#56B4E9", "high" = "red")) +
   labs(
-    title = "Predicted N Values for Zdip and CERCA Modeling Under Med and High N Treatments",
+    title = "Predicted N Values for Zdip Under Med and High N Treatments",
     x = "Condition",
     y = "Predicted N(%)"
   ) +
+  scale_x_discrete(labels = c("Zdip.med" = "Medium N", "Zdip.high" = "High N")) +
   theme_hc(base_size = 20) +
   theme(
-    panel.grid = element_blank(),
+    panel.grid.major.y = element_blank(),  # Remove major grid lines on y-axis
+    panel.grid.minor.y = element_blank(),  # Remove minor grid lines on y-axis
     panel.background = element_rect(fill = "white"),
     plot.title = element_text(hjust = 0.5),
     legend.title = element_blank(),
-    legend.position = "top"
+    legend.position = "top",
+    axis.line = element_line(color = "black", size = 1)  # Add axis lines for both x and y axes
   )
 
+print(n_plot)
+
 # Save the plot
-ggsave("figures/predicted_N_all_plot.png", n_plot, width = 14, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("figures/predicted_N_Zdip_plot.png", n_plot, width = 10, height = 8, units = "in", dpi = 300, bg="white")
+
+
+
+

@@ -25,9 +25,9 @@ write.csv(predicted_N_all, "results/predicted_N_all.csv", row.names = FALSE)
 # Response_N
 response_N <- readRDS("data/response_N.rds")
 
-
-
-
+# Separate to CERCA and Zdip
+desc <- read.csv("data/All_spectral_info.csv")
+zdip <- desc[desc$experiment == "Zdip",]
 
 # Get CERCA sample names
 reflectance_grouped_avg_cerca <- readRDS("data/reflectance_all_grouped_avg.rds")
