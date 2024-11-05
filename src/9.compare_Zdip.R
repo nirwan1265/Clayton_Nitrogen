@@ -139,7 +139,7 @@ b73_plot <- ggplot(b73_summary, aes(x = leaf, y = mean_predicted_N_B73, group = 
 print(b73_plot)
 
 # Save the plot as a PNG file
-ggsave("figures/Zdip_N_Control_med.png", plot = b73_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
+#ggsave("figures/Zdip_N_Control_med.png", plot = b73_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
 
 
 # Filter genotypes that are above the upper confidence interval for all leaf stages
@@ -165,10 +165,61 @@ genotypes_below_CI <- different_genotypes %>%
 print(genotypes_below_CI)
 
 
+# Filter genotypes that have e1 and e2 above the upper CI and e3 below the lower CI
+genotypes_mixed_CI <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::mutate(condition = case_when(
+    (leaf == "e1" & mean_predicted_N > upper_CI) ~ "above",
+    (leaf == "e2" & mean_predicted_N > upper_CI) ~ "above",
+    (leaf == "e3" & mean_predicted_N < lower_CI) ~ "below",
+    TRUE ~ "other"
+  )) %>%
+  dplyr::group_by(genotype) %>%
+  dplyr::summarise(
+    e1_status = any(condition == "above" & leaf == "e1"),
+    e2_status = any(condition == "above" & leaf == "e2"),
+    e3_status = any(condition == "below" & leaf == "e3")
+  ) %>%
+  dplyr::filter(e1_status & e2_status & e3_status)  # Keep only genotypes meeting all conditions
+
+# View the result
+genotypes_mixed_CI
 
 
+# Filter genotypes where e1 > e2 > e3
+genotypes_decreasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e1 > e2 & e2 > e3)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_decreasing_pattern
 
 
+# Filter genotypes where e2 > e1 > e3
+genotypes_decreasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e2 > e1 & e1 > e3)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_decreasing_pattern
+
+
+# Filter genotypes where e3 > e2 > e1
+genotypes_increasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e3 > e2 & e2 > e1)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_increasing_pattern
+
+
+#### High 
 # Summarize zdip_lines_high to get the mean predicted_N for each genotype across each leaf stage
 zdip_lines_high_summary <- zdip_lines_high %>%
   group_by(genotype, leaf) %>%
@@ -263,7 +314,7 @@ b73_plot <- ggplot(b73_summary, aes(x = leaf, y = mean_predicted_N_B73, group = 
 print(b73_plot)
 
 # Save the plot as a PNG file
-ggsave("figures/Zdip_N_Control_high.png", plot = b73_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
+#ggsave("figures/Zdip_N_Control_high.png", plot = b73_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
 
 
 # Filter genotypes that are above the upper confidence interval for all leaf stages
@@ -289,4 +340,57 @@ genotypes_below_CI <- different_genotypes %>%
 print(genotypes_below_CI)
 
 
+
+# Filter genotypes that have e1 and e2 above the upper CI and e3 below the lower CI
+genotypes_mixed_CI <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::mutate(condition = case_when(
+    (leaf == "e1" & mean_predicted_N > upper_CI) ~ "above",
+    (leaf == "e2" & mean_predicted_N > upper_CI) ~ "above",
+    (leaf == "e3" & mean_predicted_N < lower_CI) ~ "below",
+    TRUE ~ "other"
+  )) %>%
+  dplyr::group_by(genotype) %>%
+  dplyr::summarise(
+    e1_status = any(condition == "above" & leaf == "e1"),
+    e2_status = any(condition == "above" & leaf == "e2"),
+    e3_status = any(condition == "below" & leaf == "e3")
+  ) %>%
+  dplyr::filter(e1_status & e2_status & e3_status)  # Keep only genotypes meeting all conditions
+
+# View the result
+genotypes_mixed_CI
+
+
+# Filter genotypes where e1 > e2 > e3
+genotypes_decreasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e1 > e2 & e2 > e3)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_decreasing_pattern
+
+
+# Filter genotypes where e2 > e1 > e3
+genotypes_decreasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e2 > e1 & e1 > e3)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_decreasing_pattern
+
+
+# Filter genotypes where e3 > e2 > e1
+genotypes_increasing_pattern <- different_genotypes %>%
+  dplyr::inner_join(b73_summary, by = "leaf") %>%
+  dplyr::select(genotype, leaf, mean_predicted_N) %>%
+  tidyr::spread(key = leaf, value = mean_predicted_N) %>%
+  dplyr::filter(e3 > e2 & e2 > e1)  # Keep only genotypes with e1 > e2 > e3
+
+# View the result
+genotypes_increasing_pattern
 

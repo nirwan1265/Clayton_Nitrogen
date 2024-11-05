@@ -5,14 +5,14 @@ genes_only <- ref_GRanges[mcols(ref_GRanges)$type == "gene"]
 genes_only
 
 # ROI for chr10 for Zdip med
-chr10 <- c(99000000,	114000000)
+chr2 <- c(1000000,	7000000)
 
 
 # Load necessary library
 library(GenomicRanges)
 
 # Subset the genes from chromosome 10 within the specified range
-genes_chr10_in_range <- subset(genes_only, seqnames == "chr10" & start >= 99000000 & end <= 114000000)
+genes_chr10_in_range <- subset(genes_only, seqnames == "chr2" & start >= 1000000 & end <= 7000000)
 
 # Print the genes
 genes_chr10_in_range
@@ -26,4 +26,4 @@ genes_chr10_df <- data.frame(
 # Print the data frame
 print(genes_chr10_df)
 
-write.csv(genes_chr10_df, file = "Zdip_N_ROI_chr10_med_C.csv", row.names = FALSE)
+write.csv(genes_chr10_df, file = "Zdip_N_ROI_chr2_med__below_CI_Control.csv", row.names = FALSE)
