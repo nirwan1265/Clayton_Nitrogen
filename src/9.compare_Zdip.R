@@ -98,7 +98,7 @@ top_10_genotypes <- genotype_diff_summary %>%
   dplyr::slice_head(n = 25)
 
 # Print the top 10 genotypes
-print(top_10_genotypes)
+print(top_10_genotypes, n = 25)
 
 # Filter data for the top 10 genotypes to plot
 top_10_genotypes_data <- zdip_lines_med_summary %>%
@@ -152,6 +152,7 @@ genotypes_above_CI <- different_genotypes %>%
 
 # Print the result
 print(genotypes_above_CI)
+genotypes_above_CI_med <- genotypes_above_CI
 
 # Filter genotypes that are below the lower confidence interval for all leaf stages
 genotypes_below_CI <- different_genotypes %>%
@@ -163,7 +164,7 @@ genotypes_below_CI <- different_genotypes %>%
 
 # Print the result
 print(genotypes_below_CI)
-
+genotypes_below_CI_med <- genotypes_below_CI
 
 # Filter genotypes that have e1 and e2 above the upper CI and e3 below the lower CI
 genotypes_mixed_CI <- different_genotypes %>%
@@ -219,7 +220,11 @@ genotypes_increasing_pattern <- different_genotypes %>%
 genotypes_increasing_pattern
 
 
-#### High 
+################################################################################ 
+### High 
+################################################################################
+
+
 # Summarize zdip_lines_high to get the mean predicted_N for each genotype across each leaf stage
 zdip_lines_high_summary <- zdip_lines_high %>%
   group_by(genotype, leaf) %>%
@@ -393,4 +398,66 @@ genotypes_increasing_pattern <- different_genotypes %>%
 
 # View the result
 genotypes_increasing_pattern
+
+
+
+##################
+# Compare the common genes for med nitrogen for upper and lower CI
+
+# Lines that are different in med condition
+common <- top_10_genotypes$genotype
+
+# Common lines having both genes SAG12 and NRT1 PRT 2.12
+common <- c("Zdip-CIM10003_P2_P4_P3.2.1.1",
+"Zdip-CIM10003_P3_P2_P4.1.1.1",
+"Zdip-JLVTKV-719_P2_P5_P5.1.1.1",
+"Zdip-JLVTKV-720_P1_P1_P2.1.1.1",
+"Zdip-JLVTKV-720_P1_P1_P2.2.1.1",
+"Zdip-JLVTKV-720_P1_P3_P1.3.1.1",
+"Zdip-JLVTKV-720_P1_P4_P5.3.1.1",
+"Zdip-JLVTKV-720_P1_P4_P5.4.1.1",
+"Zdip-JLVTKV-720_P1_P5_P2.1.1.1",
+"Zdip-JSG-RMM-LCL-551_P3_P1_P3.4.1.1")
+
+# Filter `zdip_lines_med_summary` for the selected genotypes in `common`
+selected_genotypes_data <- zdip_lines_med_summary %>%
+  filter(genotype %in% common)
+
+selected_genotypes_data <- zdip_lines_high_summary %>%
+  filter(genotype %in% common)
+
+genotype_colors <- c(
+  RColorBrewer::brewer.pal(n = 12, name = "Set3"),  # 12 colors from Set3
+  RColorBrewer::brewer.pal(n = 8, name = "Dark2"),  # 8 colors from Dark2
+  RColorBrewer::brewer.pal(n = 5, name = "Set1")    # 5 colors from Set1
+)
+
+# Plot the B73 mean line and confidence intervals
+b73_plot <- ggplot(b73_summary, aes(x = leaf, y = mean_predicted_N_B73, group = 1)) +
+  geom_line(color = "blue", size = 1.2, linetype = "solid") +  # Mean line for B73
+  geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), fill = "lightblue", alpha = 0.3) +  # Confidence interval band
+  geom_point(color = "blue", size = 2) +  # Points for the B73 mean
+  labs(
+    title = "95% Confidence Interval for B73 with Selected Genotypes for Med Nitrogen",
+    x = "Leaf Stage",
+    y = "Predicted N (%)"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA)
+  )
+
+# Add lines and points for the selected genotypes
+final_plot <- b73_plot +
+  geom_line(data = selected_genotypes_data, aes(x = leaf, y = mean_predicted_N, group = genotype, color = genotype), size = 1) +
+  geom_point(data = selected_genotypes_data, aes(x = leaf, y = mean_predicted_N, color = genotype), size = 2) +
+  scale_color_manual(values = genotype_colors)  # Customize color palette
+
+# Print the final plot
+print(final_plot)
+
+# Save the plot as a PNG file
+ggsave("figures/common_Zdip_N_Control_med_common_upper_lower_CI.png", plot = final_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
+
 

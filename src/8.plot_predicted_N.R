@@ -10,6 +10,7 @@ predicted_N_all <- read.csv("results/predicted_N_all.csv")
 
 # Load the info file
 info <- read.csv("data/All_spectral_info.csv")
+info <- info[complete.cases(info),]
 
 # Remove _1.asd and _2.asd from the column names. Did 250 cause there was an error before
 for (i in 1:10) {
@@ -24,35 +25,37 @@ info$file <- gsub("[-.]", "_", info$file)
 
 # Merge the predicted values with the info file using dplyr::inner_join
 predicted_N_all <- inner_join(predicted_N_all, info, by = c("sample_id" = "file"))
-
+predicted_N_all_zdip <- predicted_N_all
 # Subset Zdip from experiment column
-predicted_N_all_zdip <- predicted_N_all[predicted_N_all$experiment == "Zdip", ]
-write.csv(predicted_N_all_zdip, "results/predicted_N_all_zdip.csv", row.names = FALSE)
+#predicted_N_all_zdip <- predicted_N_all[predicted_N_all$experiment == "Zdip", ]
+#write.csv(predicted_N_all_zdip, "results/predicted_N_all_zdip.csv", row.names = FALSE)
+
 # Subset "CERCA modeling" from experiment column
-predicted_N_all_modeling <- predicted_N_all[predicted_N_all$experiment != "Zdip", ]
+#predicted_N_all_modeling <- predicted_N_all[predicted_N_all$experiment != "Zdip", ]
+#write.csv(predicted_N_all_modeling, "results/predicted_N_all_modeling.csv", row.names = FALSE)
 
 # Subset med and high from N_treatment from predicted_N_all_zdip
 predicted_N_all_zdip_med <- predicted_N_all_zdip[predicted_N_all_zdip$N_treatment %in% c("med"), ]
 predicted_N_all_zdip_high <- predicted_N_all_zdip[predicted_N_all_zdip$N_treatment %in% c("high"), ]
 
 # Subset med and high from N_treatment from predicted_N_all_modeling
-predicted_N_all_modeling_med <- predicted_N_all_modeling[predicted_N_all_modeling$N_treatment %in% c("med"), ]
-predicted_N_all_modeling_high <- predicted_N_all_modeling[predicted_N_all_modeling$N_treatment %in% c("high"), ]
+#predicted_N_all_modeling_med <- predicted_N_all_modeling[predicted_N_all_modeling$N_treatment %in% c("med"), ]
+#predicted_N_all_modeling_high <- predicted_N_all_modeling[predicted_N_all_modeling$N_treatment %in% c("high"), ]
 
 # Plot the predicted values 
 # Combine the data for the plot
 combined_data <- bind_rows(
   predicted_N_all_zdip_med,
-  predicted_N_all_zdip_high,
-  predicted_N_all_modeling_med,
-  predicted_N_all_modeling_high
+  predicted_N_all_zdip_high
+  #predicted_N_all_modeling_med,
+  #predicted_N_all_modeling_high
 )
 str(combined_data)
 
 
 # Ensure that `N_treatment` and `experiment` are factors with the correct order
-combined_data$N_treatment <- factor(combined_data$N_treatment, levels = c("med", "high"))
-combined_data$experiment <- factor(combined_data$experiment, levels = c("CERCA modeling", "Zdip"))
+#combined_data$N_treatment <- factor(combined_data$N_treatment, levels = c("med", "high"))
+#combined_data$experiment <- factor(combined_data$experiment, levels = c("CERCA modeling", "Zdip"))
 
 # Create the box plot with jitter
 # ggplot(combined_data, aes(x = interaction(experiment, N_treatment, lex.order = TRUE), y = predicted_N, fill = N_treatment)) +
@@ -74,7 +77,8 @@ combined_data$experiment <- factor(combined_data$experiment, levels = c("CERCA m
 #   )
 
 # Subset the Zdop
-combined_data <- combined_data[combined_data$experiment == "Zdip",]
+
+#combined_data <- combined_data[combined_data$experiment == "Zdip",]
 
 # Plot the diagram
 n_plot <- ggplot(combined_data, aes(x = interaction(experiment, N_treatment, lex.order = TRUE), y = predicted_N, fill = N_treatment)) +
