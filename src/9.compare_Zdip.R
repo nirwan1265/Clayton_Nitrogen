@@ -74,6 +74,8 @@ print(b73_summary)
 b73_summary <- b73_summary %>%
   rename(mean_predicted_N_B73 = mean_predicted_N)
 
+b73_summary_med <- b73_summary
+
 # Identify genotypes whose mean predicted N values are completely outside the 95% confidence interval of B73
 different_genotypes <- zdip_lines_med_summary %>%
   dplyr::inner_join(b73_summary, by = "leaf") %>%
@@ -99,6 +101,7 @@ top_10_genotypes <- genotype_diff_summary %>%
 
 # Print the top 10 genotypes
 print(top_10_genotypes, n = 25)
+
 
 # Filter data for the top 10 genotypes to plot
 top_10_genotypes_data <- zdip_lines_med_summary %>%
@@ -253,6 +256,8 @@ print(b73_summary)
 b73_summary <- b73_summary %>%
   rename(mean_predicted_N_B73 = mean_predicted_N)
 
+b73_summary_high <- b73_summary
+
 # Identify genotypes whose mean predicted N values are completely outside the 95% confidence interval of B73
 different_genotypes <- zdip_lines_high_summary %>%
   dplyr::inner_join(b73_summary, by = "leaf") %>%
@@ -405,7 +410,11 @@ genotypes_increasing_pattern
 # Compare the common genes for med nitrogen for upper and lower CI
 
 # Lines that are different in med condition
-common <- top_10_genotypes$genotype
+common <- genotypes_above_CI_med$genotype
+
+# Lines that are different in med condition
+common <- genotypes_below_CI_med$genotype
+
 
 # Common lines having both genes SAG12 and NRT1 PRT 2.12
 common <- c("Zdip-CIM10003_P2_P4_P3.2.1.1",
@@ -422,9 +431,11 @@ common <- c("Zdip-CIM10003_P2_P4_P3.2.1.1",
 # Filter `zdip_lines_med_summary` for the selected genotypes in `common`
 selected_genotypes_data <- zdip_lines_med_summary %>%
   filter(genotype %in% common)
+b73_summary <- b73_summary_med
 
 selected_genotypes_data <- zdip_lines_high_summary %>%
   filter(genotype %in% common)
+b73_summary <- b73_summary_high
 
 genotype_colors <- c(
   RColorBrewer::brewer.pal(n = 12, name = "Set3"),  # 12 colors from Set3
@@ -438,7 +449,7 @@ b73_plot <- ggplot(b73_summary, aes(x = leaf, y = mean_predicted_N_B73, group = 
   geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), fill = "lightblue", alpha = 0.3) +  # Confidence interval band
   geom_point(color = "blue", size = 2) +  # Points for the B73 mean
   labs(
-    title = "95% Confidence Interval for B73 with Selected Genotypes for Med Nitrogen",
+    title = "95% Confidence Interval for B73 with Selected Genotypes for NRT1 PTR2.12 High Nitrogen",
     x = "Leaf Stage",
     y = "Predicted N (%)"
   ) +
@@ -458,6 +469,6 @@ final_plot <- b73_plot +
 print(final_plot)
 
 # Save the plot as a PNG file
-ggsave("figures/common_Zdip_N_Control_med_common_upper_lower_CI.png", plot = final_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
+ggsave("figures/NRT1_lines_high_N.png", plot = final_plot, width = 14, height = 8, units = "in", dpi = 300, bg = "white")
 
 
