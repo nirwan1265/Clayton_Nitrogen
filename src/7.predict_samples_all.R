@@ -19,7 +19,7 @@ colnames(predicted_N_all)[1] <- "predicted_N"
 predicted_N_all <- predicted_N_all[,c(2,1)]
 
 # Save the predicted N values
-write.csv(predicted_N_all, "results/predicted_N_all.csv", row.names = FALSE)
+#write.csv(predicted_N_all, "results/predicted_N_all.csv", row.names = FALSE)
 
 
 # Response_N
@@ -63,8 +63,11 @@ plot_histogram <- function(data, title) {
     )
 }
 
+write.csv(predicted_N_cerca,"predicted_N_cerca.csv",row.names = F, quote = F)
+
 # Plot histogram for predicted_N_cerca
 hist_cerca <- plot_histogram(predicted_N_cerca, "Histogram of Predicted N Values (Cerca)")
+
 
 # Plot histogram for predicted_N_remaining
 hist_remaining <- plot_histogram(predicted_N_remaining, "Histogram of Predicted N Values (Remaining)")

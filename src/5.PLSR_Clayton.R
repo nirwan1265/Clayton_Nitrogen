@@ -109,6 +109,7 @@ n <- nrow(reflectance_grouped_avg)
 # Pre-determined optimal number of components
 optimal_components <- nComps
 optimal_components <- 7
+
 # Initialize vectors to store metrics for each repeat
 test_r2 <- numeric(n_repeats)       # R-squared (R²) for each CV test set
 train_r2cv <- numeric(n_repeats)    # r² for training set (squared correlation)
@@ -251,7 +252,7 @@ calibration_plot <- ggplot(avg_predictions, aes(x = Measured_N, y = Predicted_N,
   labs(
     x = "Measured N content (%)",
     y = "Predicted N content (%)",
-    title = "Cross-Validated Calibration Plot with Averaged Predictions"
+    title = "Cross-Validated Calibration Plot Averaged Over 10 random seeds"
   ) +
   theme_minimal(base_size = 15) +
   theme(panel.grid = element_blank(), panel.background = element_rect(fill = "white")) +
@@ -267,6 +268,9 @@ print(calibration_plot)
 
 # Save the calibration plot
 ggsave("figures/plsr_calibration_Clayton.png", calibration_plot, width = 10, height = 6, units = "in", dpi = 300, bg = "white")
+
+
+
 
 # Plot R²CV with average lines
 r2_plot <- ggplot(results_df, aes(x = Repeat, y = R2CV, color = Set)) +
