@@ -14,8 +14,7 @@ This repository provides a comprehensive analysis of Nitrogen content in the BZe
 The hyperspectral data was gathered using the ASD FieldSpec 4 Hi-Res apectroradiometer, allowing for high-resolution spectral data across different leaf samples in the BZea population.
 
 - **Measurements**: 
-  - For lines derived from _Zea diploperennis_ samples, we took two hyperspectral measurements per leaf.
-  - For other BZea samples, three measurements per leaf were taken.
+  - For each genotype, we took two measurements on three leaves of 2 plants per plot. The leaves measured were chosen relative to the primary ear, where the first was 2 below the ear (e1), then one above the ear (e2), and finally four above the ear (e3). We took measurements at timepoints that roughly corresponded to VT, R1, and R4. 
 
 ### Nitrogen Analysis
 For nitrogen analysis, we weighed 2 mg of each dry leaf sample and placed it in the Thermo Scientific Flash 2000 CHNS/O Analyzer. Each sample was then combusted in a high-temperature reactor with added oxygen. Using the Dumas method, the analyzer measured the nitrogen gas produced, providing a nitrogen content reading for each sample. This analysis was conducted with the assistance of Rashid (from The Sustainable Soil Lab at NCSU).
