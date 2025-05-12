@@ -11,11 +11,11 @@ This repository provides a comprehensive analysis of Nitrogen content in the BZe
 ## Methods
 
 ### Hyperspectral Analysis
-The hyperspectral data was gathered using a hyperspectral imaging instrument, allowing for high-resolution spectral data across different leaf samples in the BZea population.
+The hyperspectral data was gathered using the ASD FieldSpec 4 Hi-Res apectroradiometer, allowing for high-resolution spectral data across different leaf samples in the BZea population.
 
 - **Measurements**: 
-  - For Zdip samples, we conducted five hyperspectral measurements per leaf.
-  - For other BZea samples, three measurements per leaf were taken to ensure accurate data capture.
+  - For lines derived from _Zea diploperennis_ samples, we took two hyperspectral measurements per leaf.
+  - For other BZea samples, three measurements per leaf were taken.
 
 ### Nitrogen Analysis
 For nitrogen analysis, we weighed 2 mg of each dry leaf sample and placed it in the Thermo Scientific Flash 2000 CHNS/O Analyzer. Each sample was then combusted in a high-temperature reactor with added oxygen. Using the Dumas method, the analyzer measured the nitrogen gas produced, providing a nitrogen content reading for each sample. This analysis was conducted with the assistance of Rashid (from The Sustainable Soil Lab at NCSU).
